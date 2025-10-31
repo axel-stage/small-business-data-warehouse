@@ -1,0 +1,42 @@
+name: small-business
+
+networks:
+  default:
+    name: vp-network
+
+volumes:
+  dw-vol:
+    driver: local
+
+secrets:
+  dwadmin_secret:
+    file: ${PWD}/data_warehouse/secret/dwadmin
+  postgres_secret:
+    file: ${PWD}/data_warehouse/secret/postgres
+
+services:
+  data-warehouse:
+    platform: linux/amd64
+    image: postgres:16.3
+    container_name: data-warehouse
+    ports:
+      - 5432:5432
+    volumes:
+      # named volume, stored /var/lib/docker/volumes
+      - dw-vol:/var/lib/postgresql/data
+      # entrypoint script when container starts
+      - ${PWD}/scripts/entrypoint-data-warehouse.sh:/docker-entrypoint-initdb.d/entrypoint-data-warehouse.sh
+      # data
+      - ${PWD}/datasets:/datasets:ro
+    restart: always
+    env_file:
+      - path: .env.dev
+    secrets:
+      - postgres_secret
+      - dwadmin_secret
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s

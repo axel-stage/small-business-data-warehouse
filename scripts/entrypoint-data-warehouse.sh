@@ -1,0 +1,63 @@
+#!/bin/bash
+set -e
+
+# connect to postgres db with postgres role
+psql -v ON_ERROR_STOP=1 \
+    --username ${POSTGRES_USER} \
+    --dbname ${POSTGRES_DB} <<EOF
+\timing
+\conninfo
+
+-- role
+CREATE ROLE ${DWADMIN}
+WITH LOGIN
+PASSWORD '$(cat $DWADMIN_SECRET_FILE)'
+CONNECTION LIMIT 5
+VALID UNTIL 'infinity'
+NOCREATEDB
+NOSUPERUSER
+NOCREATEROLE
+NOINHERIT
+NOBYPASSRLS
+NOREPLICATION;
+
+-- database
+CREATE DATABASE ${DW_NAME}
+WITH OWNER ${DWADMIN}
+TEMPLATE template1
+ENCODING='UTF8';
+\q
+EOF
+
+# connect to created db with postgres role
+psql -v ON_ERROR_STOP=1 \
+    --username ${POSTGRES_USER} \
+    --dbname ${DW_NAME} <<EOF
+\timing
+\conninfo
+
+-- schema
+DROP SCHEMA IF EXISTS public CASCADE;
+CREATE SCHEMA IF NOT EXISTS ${SCHEMA} AUTHORIZATION ${DWADMIN};
+CREATE SCHEMA IF NOT EXISTS silver AUTHORIZATION ${DWADMIN};
+CREATE SCHEMA IF NOT EXISTS gold AUTHORIZATION ${DWADMIN};
+SET search_path TO ${SCHEMA};
+
+-- extension
+CREATE EXTENSION IF NOT EXISTS dblink
+WITH SCHEMA ${SCHEMA}
+VERSION '1.2';
+
+CREATE EXTENSION IF NOT EXISTS adminpack
+WITH SCHEMA pg_catalog
+VERSION '2.0';
+\q
+EOF
+
+# change default postgres password to secret
+psql -v ON_ERROR_STOP=1 \
+    --username ${POSTGRES_USER} \
+    --dbname ${POSTGRES_DB} <<EOF
+ALTER USER ${POSTGRES_USER} WITH PASSWORD '$(cat $POSTGRES_SECRET_FILE)';
+\q
+EOF
