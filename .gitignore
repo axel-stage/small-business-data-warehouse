@@ -1,3 +1,7 @@
 # folder
 /datasets
 /examples
+*/secret
+
+# files
+.env*
