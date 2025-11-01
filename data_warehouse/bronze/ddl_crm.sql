@@ -23,8 +23,8 @@ create table bronze.crm_prd_info
     prd_nm       varchar(500),
     prd_cost     int,
     prd_line     varchar(500),
-    prd_start_dt datetime,
-    prd_end_dt   datetime
+    prd_start_dt timestamp,
+    prd_end_dt   timestamp
 );
 
 drop table if exists bronze.crm_sales_details;
