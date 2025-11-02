@@ -17,6 +17,7 @@ create table silver.crm_customer_info (
 drop table if exists silver.crm_product_info;
 create table silver.crm_product_info (
     prd_id                  bigint,
+    prd_key                 varchar(1000),
     prd_category_id         varchar(1000),
     prd_name                varchar(1000),
     prd_line                varchar(1000),
