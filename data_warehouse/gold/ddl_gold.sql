@@ -33,7 +33,7 @@ from silver.crm_customer_info as cc
 left join silver.erp_customer_az12 as ec on cc.cst_key = ec.cid
 left join silver.erp_location_a101 as el on cc.cst_key = el.cid;
 
-create view gold.dim_product as 
+create view gold.dim_product as
 select
 cp.prd_id           as  product_id,
 cp.prd_key          as  product_key,
@@ -59,7 +59,7 @@ dc.customer_key,
 sls_order_date          as order_date,
 sls_ship_date           as ship_date,
 sls_due_date            as due_date,
-sls_sales               as sales_amount,
+-- sls_sales               as sales_amount, -- replaced by total_price function
 sls_quantity            as quantity,
 sls_price               as price
 from silver.crm_sales_details as cs
