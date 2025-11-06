@@ -1,18 +1,13 @@
 #!/bin/bash
-set -e
 
 source .env.dev
 export PGPASSWORD=$(cat docker/secret/dwadmin)
-psql -v ON_ERROR_STOP=1 \
+psql \
     --host ${DW_HOST} \
     --port ${DW_PORT} \
     --username ${DWADMIN} \
     --dbname ${DW_NAME} <<EOF
-\conninfo
-\timing
--- crm data
-call silver.etl_crm();
--- erp data
-call silver.etl_erp();
+\i ${PWD}/tests/infrastructure_test.sql
+\i ${PWD}/tests/quality_test_silver.sql
 \q
 EOF
