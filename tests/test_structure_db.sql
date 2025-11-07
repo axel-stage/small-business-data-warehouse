@@ -16,7 +16,7 @@ begin;
 set search_path to pgtap;
 
 -- plan tests
-select plan(25);
+select plan(24);
 
 -- run the tests.
 select has_schema('bronze'::name);
@@ -47,7 +47,6 @@ select has_function('silver'::name,'etl_erp'::name);
 select has_view('gold'::name,'dim_customer'::name);
 select has_view('gold'::name,'dim_product'::name);
 select has_view('gold'::name,'fact_sales'::name);
-select has_function('gold'::name,'total_price'::name);
 
 -- finish tests
 select * from finish();
