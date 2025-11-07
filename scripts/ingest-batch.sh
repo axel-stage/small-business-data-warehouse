@@ -2,7 +2,7 @@
 set -e
 
 source .env.dev
-export PGPASSWORD=$(cat data_warehouse/secret/postgres)
+export PGPASSWORD=$(cat docker/secret/postgres)
 psql -v ON_ERROR_STOP=1 \
     --host ${DW_HOST} \
     --port ${DW_PORT} \
