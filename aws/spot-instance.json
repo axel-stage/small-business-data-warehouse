@@ -1,6 +1,6 @@
 {
-  "MarketType": "spot",
-  "SpotOptions": {
-    "SpotInstanceType": "one-time"
-  }
+    "MarketType": "spot",
+    "SpotOptions": {
+        "SpotInstanceType": "one-time"
+    }
 }

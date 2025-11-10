@@ -12,28 +12,28 @@ psql -v ON_ERROR_STOP=1 \
 \timing
 \conninfo
 
-truncate table bronze.crm_cust_info;
+truncate table bronze.erp_cust_az12;
 select aws_s3.table_import_from_s3(
-    'bronze.crm_cust_info',
+    'bronze.erp_cust_az12',
     '',
     '(FORMAT CSV, DELIMITER '','', HEADER true)',
-    aws_commons.create_s3_uri('datatestbed', '/source_crm/cust_info.csv', '${REGION}')
+    aws_commons.create_s3_uri('datatestbed', '/source_erp/CUST_AZ12.csv', '${REGION}')
 );
 
-truncate table bronze.crm_prd_info;
+truncate table bronze.erp_loc_a101;
 select aws_s3.table_import_from_s3(
-    'bronze.crm_prd_info',
+    'bronze.erp_loc_a101',
     '',
     '(FORMAT CSV, DELIMITER '','', HEADER true)',
-    aws_commons.create_s3_uri('datatestbed', '/source_crm/prd_info.csv', '${REGION}')
+    aws_commons.create_s3_uri('datatestbed', '/source_erp/LOC_A101.csv', '${REGION}')
 );
 
-truncate table bronze.crm_sales_details;
+truncate table bronze.erp_px_cat_g1v2;
 select aws_s3.table_import_from_s3(
-    'bronze.crm_sales_details',
+    'bronze.erp_px_cat_g1v2',
     '',
     '(FORMAT CSV, DELIMITER '','', HEADER true)',
-    aws_commons.create_s3_uri('datatestbed', '/source_crm/sales_details.csv', '${REGION}')
+    aws_commons.create_s3_uri('datatestbed', '/source_erp/PX_CAT_G1V2.csv', '${REGION}')
 );
 \q
 EOF

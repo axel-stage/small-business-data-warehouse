@@ -18,6 +18,10 @@ echo $vpc_id
 aws ec2 modify-vpc-attribute --vpc-id ${vpc_id} --enable-dns-support "{\"Value\":true}"
 aws ec2 modify-vpc-attribute --vpc-id ${vpc_id} --enable-dns-hostnames "{\"Value\":true}"
 
+aws ec2 create-tags \
+    --resources ${vpc_id} \
+    --tags Key=Stack,Value=${ENVIRONMENT} Key=Name,Value=${VPC_NAME}
+
 # private subnet a
 sub_a_pri_id=$(
   aws ec2 create-subnet \
@@ -52,6 +56,8 @@ ssm_node_role_arn=$(
     --query Role.Arn \
     --output text
 )
+echo $ssm_node_role_arn
+
 aws iam attach-role-policy \
   --role-name ${SSM_NODE_ROLE_NAME} \
   --policy-arn \
@@ -66,6 +72,8 @@ ssm_node_security_group_id=$(
     --query GroupId \
     --output text
 )
+echo $ssm_node_security_group_id
+
 aws ec2 authorize-security-group-ingress \
   --group-id ${ssm_node_security_group_id} \
   --protocol all \
@@ -79,6 +87,8 @@ iam_instance_profile_arn=$(
     --query InstanceProfile.Arn \
     --output text
 )
+echo $iam_instance_profile_arn
+
 aws iam add-role-to-instance-profile \
   --instance-profile-name ${SSM_NODE_INSTANCE_PROFILE_NAME} \
   --role-name ${SSM_NODE_ROLE_NAME}
@@ -115,8 +125,8 @@ aws rds create-db-subnet-group \
 # db parameter group
 aws rds create-db-parameter-group \
   --db-parameter-group-name ${DB_PARAMETER_GROUP_NAME} \
-  --db-parameter-group-family postgres16 \
-  --description "postgres16 parameter group v01"
+  --db-parameter-group-family ${DB_PARAMETER_GROUP_FAMILY} \
+  --description "custom postgres parameter group v01"
 
 # security group
 rds_security_group_id=$(
@@ -127,6 +137,7 @@ rds_security_group_id=$(
     --query GroupId \
     --output text
 )
+echo $rds_security_group_id
 
 # create security group ingress rules
 aws ec2 authorize-security-group-ingress \
@@ -144,7 +155,7 @@ aws rds create-db-instance \
   --db-instance-class ${DB_INSTANCE_CLASS} \
   --engine postgres \
   --engine-version ${POSTGRES_ENGINE_VERSION} \
-  --port ${DB_PORT} \
+  --port ${DW_PORT} \
   --db-name ${POSTGRES_DB} \
   --master-username ${POSTGRES_USER} \
   --master-user-password ${POSTGRES_PASSWORD} \
@@ -160,7 +171,9 @@ aws rds create-db-instance \
   --monitoring-interval 0 \
   --enable-performance-insights \
   --performance-insights-retention-period 7 \
-  --enable-cloudwatch-logs-exports postgresql
+  --enable-cloudwatch-logs-exports postgresql \
+  --query DBInstance[].DBInstanceIdentifier \
+  --output text
 
 ###############################################################################
 
@@ -173,6 +186,8 @@ rds_role_arn=$(
     --query Role.Arn \
     --output text
 )
+echo $rds_role_arn
+
 # create policy
 rds_policy_arn=$(
   aws iam create-policy \
@@ -193,16 +208,19 @@ rds_policy_arn=$(
           "Resource": [
               "arn:aws:s3:::datatestbed/source_crm",
               "arn:aws:s3:::datatestbed/source_crm/*",
-              "arn:aws:s3:::datatestbed/source_prd",
-              "arn:aws:s3:::datatestbed/source_prd/*"
+              "arn:aws:s3:::datatestbed/source_erp",
+              "arn:aws:s3:::datatestbed/source_erp/*"
           ]
       }]
   }'
 )
+echo $rds_policy_arn
+
 # attach policy to role
 aws iam attach-role-policy \
   --policy-arn ${rds_policy_arn} \
   --role-name ${RDS_ROLE_NAME}
+
 # attach role to cluster and import feature
 aws rds add-role-to-db-instance \
   --region ${REGION} \
@@ -221,14 +239,15 @@ aws ec2 create-vpc-endpoint \
     --query VpcEndpoint.VpcEndpointId \
     --output text
 
-s3_vpc_endpoint=$(
-  aws ec2 create-vpc-endpoint \
-      --vpc-id ${vpc_id} \
-      --vpc-endpoint-type Gateway \
-      --service-name com.amazonaws.${REGION}.s3 \
-      --query VpcEndpoint.VpcEndpointId \
-      --output text
-)
+aws ec2 create-vpc-endpoint \
+    --vpc-id ${vpc_id} \
+    --vpc-endpoint-type Interface \
+    --service-name com.amazonaws.${REGION}.ssmmessages \
+    --subnet-ids ${sub_a_pri_id} \
+    --security-group-id ${ssm_node_security_group_id} \
+    --query VpcEndpoint.VpcEndpointId \
+    --output text
+
 
 private_rt_id=$(
   aws ec2 describe-route-tables \
@@ -237,7 +256,10 @@ private_rt_id=$(
     --output text
 )
 
-aws ec2 modify-vpc-endpoint \
-  --vpc-endpoint-id ${s3_vpc_endpoint} \
-  --add-route-table-ids ${private_rt_id} \
-  --reset-policy
+aws ec2 create-vpc-endpoint \
+  --vpc-id ${vpc_id} \
+  --vpc-endpoint-type Gateway \
+  --service-name com.amazonaws.${REGION}.s3 \
+  --route-table-ids ${private_rt_id}
+  --query VpcEndpoint.VpcEndpointId \
+  --output text

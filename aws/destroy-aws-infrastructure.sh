@@ -63,18 +63,27 @@ rds_role_policies_arn=$(
     --output text
 )
 
+# show config blog
+echo -e "
+               ssm_node_id: ${ssm_node_id}\n\
+            ssm_node_sg_id: ${ssm_node_sg_id}\n\
+                 rds_sg_id: ${rds_sg_id}\n\
+          vpc_endpoint_ids: ${vpc_endpoint_ids}\n\
+                    vpc_id: ${vpc_id}\n\
+                   subnets: ${subnets}\n\
+             private_rt_id: ${private_rt_id}\n\
+ssm_node_role_policies_arn: ${ssm_node_role_policies_arn}\n\
+     rds_role_policies_arn: ${rds_role_policies_arn}\n"
 
-# rds
-# db instance, db subnet group, db paramter group
-
-# ec2
-# ec2 instance, instance profile
-
+###############################################################################
+# destroy infrastructure
 
 aws rds delete-db-instance \
   --db-instance-identifier ${DB_INSTANCE_ID} \
-  --skip-final-snapshot
-  --output text
+  --skip-final-snapshot \
+  --output yaml
+
+sleep 120
 
 aws rds delete-db-subnet-group \
   --db-subnet-group-name ${DB_SUB_GROUP_NAME} \
@@ -97,6 +106,7 @@ aws iam delete-instance-profile \
   --instance-profile-name ${SSM_NODE_INSTANCE_PROFILE_NAME} \
   --output yaml
 
+sleep 120
 
 aws ec2 delete-security-group \
   --group-id ${ssm_node_sg_id} \
@@ -107,11 +117,13 @@ aws ec2 delete-security-group \
   --output yaml
 
 aws ec2 delete-vpc-endpoints \
-  --vpc-endpoint-ids ${vpc_endpoint_ids}
+  --vpc-endpoint-ids ${vpc_endpoint_ids} \
+  --output yaml
 
 aws iam detach-role-policy \
-    --role-name ${SSM_NODE_ROLE_NAME} \
-    --policy-arn ${ssm_node_role_policies_arn}
+  --role-name ${SSM_NODE_ROLE_NAME} \
+  --policy-arn ${ssm_node_role_policies_arn} \
+  --output yaml
 
 aws iam delete-role \
   --role-name ${SSM_NODE_ROLE_NAME} \
@@ -124,13 +136,6 @@ aws iam detach-role-policy \
 aws iam delete-role \
   --role-name ${RDS_ROLE_NAME} \
   --output yaml
-
-# aws ec2 delete-route \
-#     --route-table-id ${private_rt_id} \
-#     --destination-cidr-block ${VPC_CIDR}
-
-# aws ec2 delete-route-table \
-#     --route-table-id ${private_rt_id}
 
 for subnet in ${subnets[@]}
 do

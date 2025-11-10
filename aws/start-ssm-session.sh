@@ -18,4 +18,4 @@ aws ssm start-session \
   --region ${REGION} \
   --target ${ssm_node_id} \
   --document-name AWS-StartPortForwardingSessionToRemoteHost \
-  --parameters host="${rds_endpoint_address}",portNumber="${DB_PORT}",localPortNumber="${DB_PORT}"
+  --parameters host="${rds_endpoint_address}",portNumber="${DW_PORT}",localPortNumber="${DW_PORT}"

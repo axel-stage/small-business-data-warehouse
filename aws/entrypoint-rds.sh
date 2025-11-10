@@ -62,8 +62,8 @@ psql -v ON_ERROR_STOP=1 \
     --username ${POSTGRES_USER} <<EOF
 \timing
 \conninfo
-CREATE EXTENSION IF NOT EXISTS aws_s3 WITH SCHEMA bronze cascade;
 CREATE EXTENSION IF NOT EXISTS aws_commons WITH SCHEMA bronze cascade;
+CREATE EXTENSION IF NOT EXISTS aws_s3 WITH SCHEMA bronze cascade;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA pgtap;
 \q
 EOF
